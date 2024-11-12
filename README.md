@@ -5,3 +5,6 @@ FEATURES 🚀🚀
 - ???
 - ???
 - ???
+
+HOW TO USE🤔
+- Coming soon...
