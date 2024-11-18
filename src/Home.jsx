@@ -3,9 +3,12 @@ import React, { useEffect } from 'react';
 
 const Home = () => {
     useEffect(() => {
-        loadData().then((data) => {
+        const fetchData = async () => {
+            const data = await loadData();
             console.log(data);
-        });
+        };
+        fetchData();
+
     }, []);
 
     return (
@@ -16,9 +19,13 @@ const Home = () => {
 }
 const loadData = () => {
     return new Promise((resolve, reject) => {
-        setTimeout(() => {
-            resolve('Data loaded');
-        }, 2000);
+        curl('https://jsonplaceholder.typicode.com/posts', (err, response, body) => {
+            if (err) {
+                reject(err);
+            } else {
+                resolve(JSON.parse(body));
+            }
+        });
     });
 };
 
