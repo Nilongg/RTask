@@ -2,17 +2,9 @@ import React from 'react';
 import { BrowserRouter, Routes, Route, Link, Navigate } from 'react-router-dom';
 import './App.css';
 
-function HomePage() {
-  return <h1>Home Page</h1>;
-}
-
-function AboutPage() {
-  return <h1>About Page</h1>;
-}
-
-function SettingsPage() {
-  return <h1>Settings Page</h1>;
-}
+import HomePage from './Home';
+import AboutPage from './About';
+import SettingsPage from './Settings';
 
 function App() {
   return (
