@@ -1,32 +1,53 @@
-// FIle for home page functionality
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 
-const Home = () => {
-    useEffect(() => {
-        const fetchData = async () => {
-            const data = await loadData();
-            console.log(data);
-        };
-        fetchData();
+// Task imports
+import { fetchTasks, addTask, fetchTasksWtag } from "./api";
+import TaskList from "./TaskComponents/TaskList";
+import AddTask from "./TaskComponents/AddTask";
+import GetTaskWtag from "./TaskComponents/GetTaskWtag";
 
-    }, []);
 
-    return (
-        <div>
-            <h1>Home Page</h1>
-        </div>
-    );
-}
-const loadData = () => {
-    return new Promise((resolve, reject) => {
-        curl('https://jsonplaceholder.typicode.com/posts', (err, response, body) => {
-            if (err) {
-                reject(err);
-            } else {
-                resolve(JSON.parse(body));
-            }
-        });
-    });
+const HomePage = () => {
+  const [tasks, setTasks] = useState([]);
+  const [fooTasks, setTasksWtag] = useState([]);
+
+  const refreshTasks = async () => {
+    const allTasks = await fetchTasks();
+    setTasks(allTasks);
+  };
+
+  const handleAddTask = async (name, additionalData) => {
+    await addTask(name, additionalData);
+    refreshTasks();
+  };
+  
+  useEffect(() => {
+    console.log('HomePage is active');
+  }, []);
+  
+  const handleClick = () => {
+    return alert('Hello there');
+  }
+  
+  
+  useEffect(() => {
+    console.log('HomePage is active');
+    document.body.style.backgroundColor = 'lightblue';
+
+    return () => {
+      console.log('HomePage is unmounted');
+      document.body.style.backgroundColor = ''; // Cleanup
+    };
+  }, []);
+
+  
+
+  return <div id="HomeContainer">
+    <h1>Home Page</h1>
+    <button onClick={handleClick}>Click me!</button>
+    
+  </div> 
+
 };
 
-export default Home;
+export default HomePage;

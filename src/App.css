@@ -3,12 +3,12 @@
   display: grid;
   max-width: 1280px;
   margin: auto;
-  padding: 80px 2rem 2rem; /* Extra top padding to prevent overlap with fixed nav */
+  padding: 80px 2rem 2rem;
 }
 
 /* Navigation styling */
 #Navigation {
-  background-color:#252625;
+  background-color: #252625;
   padding: 10px;
   display: grid;
   grid-template-columns: 1fr 1fr 1fr;
@@ -25,9 +25,8 @@
   margin: auto;
 }
 
-/* Center links in the middle column */
 #Navigation a {
-  color:burlywood;
+  color: burlywood;
   font-family: 'Roboto', sans-serif;
   text-align: center;
   text-decoration: none;
@@ -39,6 +38,24 @@
   align-items: center;
 }
 
+#HomeContainer {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 10px;
+  justify-items: center;
+}
 
+#HomeContainer button {
+  padding: 10px 20px;
+  font-size: 16px;
+  cursor: pointer;
+  width: 50%;
+}
 
-
+#AboutContainer {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 10px;
+  justify-items: center;
+  font-weight: bold;
+}
