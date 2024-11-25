@@ -11,9 +11,9 @@ import SettingsPage from './Settings';
 
 
 
-function App() {  
-  
-  
+function App() {
+
+
   const loadSavedStyles = () => {
     const savedColor = localStorage.getItem('navFontColor');
     const savedBgColor = localStorage.getItem('navBgColor');
@@ -29,13 +29,12 @@ function App() {
       nav.style.backgroundColor = savedBgColor;
     }
 
-    
+
   };
   useEffect(() => {
     loadSavedStyles();
-    refreshTasks();
   })
-  
+
   return (
     <BrowserRouter>
       <nav id='Navigation'>

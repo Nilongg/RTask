@@ -5,16 +5,16 @@ export async function fetchTasks() {
   return response.json();
 }
 
-export async function addTask(name, additionalData) {
+export async function addTask(id, name, additionalData) {
   const response = await fetch(`${API_URL}/tasks`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ name, additional_data: additionalData }),
+    body: JSON.stringify({ id, name, additional_data: additionalData }),
   });
   return response.json();
 }
 
-export async function fetchTasksWtag() {
+export async function fetchTasksWtag(tag = "foo") {
   const fooTagId = await fetch(`${API_URL}/tags?name=foo`)
     .then((res) => res.json())
     .then((tags) => tags[0]?.id);

@@ -1,20 +1,20 @@
 #!/usr/bin/env node
 
-// A simple local server meant to be used as 
+// A simple local server meant to be used as
 // the back end for the programming assignment.
 // Run from the command line with node, e.g.,
 // "node server.js --init --port=3010 --verbose".
 // (--init will restore the database in its default state,
-// --port can be used to set the port, and --verbose 
-// echoes information about the operations to the 
-// standard output. --empty can be used to start with an 
+// --port can be used to set the port, and --verbose
+// echoes information about the operations to the
+// standard output. --empty can be used to start with an
 // empty database.)
-// Created by TJH (2024). For the time being, this 
-// should be considered as a work in progress, and 
-// not as a finished product. Suggestions for improvements 
+// Created by TJH (2024). For the time being, this
+// should be considered as a work in progress, and
+// not as a finished product. Suggestions for improvements
 // are welcome.
 
-// Version 1.1 (2024-11-15) (Added the additional_data 
+// Version 1.1 (2024-11-15) (Added the additional_data
 //                           field to the tasks table.
 //                           and support for combining
 //                           one-character options.)
@@ -35,7 +35,7 @@ let empty = false;
 let verbose = false;
 
 // Handle the command line arguments.
-// (Supports now combining different 
+// (Supports now combining different
 // one-character options, e.g., -ivp=3010)
 let nextIsPort = false;
 for (let arg of process.argv) {
@@ -65,7 +65,7 @@ for (let arg of process.argv) {
         }
       }
     }
-  }  
+  }
 }
 
 //const data_store = ':memory:'
@@ -73,13 +73,13 @@ const data_store = './db_file.db'
 
 
 // Instead of this, decided to take a softer approach to
-// resetting the situation and not to remove the file, but just 
+// resetting the situation and not to remove the file, but just
 // to drop the existing tables and recreate them. This way, the
 // possible problems with file being used by other processes
-// (such as some database manager programs like DBeaver) are avoided. 
+// (such as some database manager programs like DBeaver) are avoided.
 /*
 if (init) {
-  fs.unlinkSync(data_store); 
+  fs.unlinkSync(data_store);
 }
 */
 
@@ -208,7 +208,7 @@ const make_query = (query, returnId=false) => {
       });
     });
   }
-  else {  
+  else {
     return new Promise((resolve, reject) => {
       db.all(query, (err, rows) => {
         db.close((err) => {
@@ -234,7 +234,7 @@ const make_query = (query, returnId=false) => {
 app.get('/', (req, res) => {
   const d = new Date();
   res.send(`<h1>Hello, hello! The server is running, and this is the root.</h1>
-    <p>Today is ${d.toLocaleDateString("fi-FI")} 
+    <p>Today is ${d.toLocaleDateString("fi-FI")}
     and the time is ${d.toLocaleTimeString("fi-FI")}.</p>
     <p>Please consult README.txt for the API documentation.</p>`
   );
@@ -246,7 +246,7 @@ app.get('/options/:id', (req, res) => {
   res.set({'Content-Type': 'application/json; charset=utf-8'});
   if (verbose) {
     console.log(`Fetching the options item with ID ${id}.`);
-  } 
+  }
   make_query(`SELECT * FROM options WHERE id = ${id} LIMIT 1`)
     .then((result) => {
       if (verbose) {
@@ -263,7 +263,7 @@ app.get('/:foos', (req, res) => {
   if (req.params.foos.endsWith('s')) {
     if (verbose) {
       console.log(`Fetching all the ${req.params.foos}.`);
-    } 
+    }
     make_query(`SELECT * FROM ${req.params.foos}`)
       .then((result) => {
         if (verbose) {
@@ -283,7 +283,7 @@ app.get('/timesfortask/:task', (req, res) => {
   res.set({'Content-Type': 'application/json; charset=utf-8'});
   if (verbose) {
     console.log(`Fetching all the timestamps for task ${task}.`);
-  } 
+  }
   make_query(`SELECT * FROM timestamps WHERE task = ${task} ORDER BY timestamp;`)
     .then((result) => {
       if (verbose) {
@@ -300,7 +300,7 @@ app.get('/timesfortask/:task/:type', (req, res) => {
   res.set({'Content-Type': 'application/json; charset=utf-8'});
   if (verbose) {
     console.log(`Fetching all the timestamps of type ${type} for task ${task}.`);
-  } 
+  }
   make_query(`SELECT * FROM timestamps WHERE task = ${task} AND type = ${type} ORDER BY timestamp;`)
     .then((result) => {
       if (verbose) {
@@ -318,7 +318,7 @@ app.get('/:foos/:id', (req, res) => {
   if (req.params.foos.endsWith('s')) {
     if (verbose) {
       console.log(`Fetching an item from ${foos} with ID ${id}.`);
-    } 
+    }
     make_query(`SELECT * FROM ${foos} WHERE id = ${id} LIMIT 1`)
       .then((result) => {
         if (verbose) {
@@ -343,8 +343,9 @@ app.post('/:foo', async (req, res) => {
   let query;
   if (foo === 'tags') {
     query = `INSERT INTO tags (name) VALUES ('${req.body.name}')`;
-  } 
+  }
   else if (foo === 'tasks') {
+    console.log("req.body: ", req.body);
     query = `INSERT INTO tasks (name, tags, additional_data) VALUES ('${req.body.name}', '${req.body.tags}', '${req.body.additional_data}')`;
   }
   else if (foo === 'timestamps') {
@@ -368,7 +369,7 @@ app.put('/:foos/:id', async (req, res) => {
   let query;
   if (foos === 'tags') {
     query = `INSERT OR REPLACE INTO tags (id, name) VALUES (${id}, '${req.body.name}')`;
-  } 
+  }
   else if (foos === 'tasks') {
     console.log("req.body: ", req.body);
     query = `INSERT OR REPLACE INTO tasks (id, name, tags, additional_data) VALUES (${id}, '${req.body.name}', '${req.body.tags}', '${req.body.additional_data}')`;
@@ -378,7 +379,7 @@ app.put('/:foos/:id', async (req, res) => {
   }
   else if (foos === 'options') {
     query = `INSERT OR REPLACE INTO options (id, theme, alternative, own_textual_data) VALUES (${id}, '${req.body.theme}', '${req.body.alternative}', '${req.body.own_textual_data}')`;
-  } 
+  }
   result = await make_query(query, true);
   if (verbose) {
     console.log(result);
@@ -397,7 +398,7 @@ app.patch('/:foos/:id', async (req, res) => {
   }
   let query;
   console.log(req.body);
-  
+
   const keys = Object.keys(req.body);
   const assignments = keys.map((key) => `${key} = '${req.body[key]}'`).join(', ');
   if (assignments.length > 0) {
@@ -417,7 +418,7 @@ app.patch('/:foos/:id', async (req, res) => {
   }
   if (verbose && !error) {
     console.log(result);
-  }  
+  }
   res.send(result);
 });
 
