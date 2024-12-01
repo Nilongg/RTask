@@ -37,25 +37,3 @@
   justify-content: center;
   align-items: center;
 }
-
-#HomeContainer {
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 10px;
-  justify-items: center;
-}
-
-#HomeContainer button {
-  padding: 10px 20px;
-  font-size: 16px;
-  cursor: pointer;
-  width: 50%;
-}
-
-#AboutContainer {
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 10px;
-  justify-items: center;
-  font-weight: bold;
-}

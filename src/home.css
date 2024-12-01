@@ -1,0 +1,55 @@
+button {}
+
+#AboutContainer {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 10px;
+  justify-items: center;
+  font-weight: bold;
+}
+
+#mainContainer {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr 1fr;
+  gap: 10px;
+  justify-items: center;
+  font-weight: bold;
+}
+
+#mainContainer div {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 10px;
+  justify-items: center;
+  font-weight: bold;
+}
+
+#TempContainer {
+  display: grid;
+  grid-template-columns: 1fr;
+  justify-items: center;
+  font-weight: bold;
+  gap: 25px;
+}
+
+#taskButton button {
+  font-size: larger;
+}
+
+#HomeContainer {
+  display: grid;
+  gap: 50px;
+}
+
+.taskState li {
+  cursor: pointer;
+}
+
+.taskState li:hover {
+  color: ghostwhite;
+}
+
+#optionContainer {
+  background-color: aqua;
+  padding: 5%;
+}
