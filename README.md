@@ -1,9 +1,9 @@
 # Task managament app "Rtask"
 A web based task managament app developed using React👾
 
-# !Note!
-The backend is not implemented by me and i do not own the code!
-There are no modifications done to the backend code.
+# Note‼️
+- The backend is not implemented by me and i do not own the code!
+- There are no modifications done to the backend code.
 
 # Installation 🤖
 - Use releases.
