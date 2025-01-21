@@ -10,7 +10,7 @@ export async function fetchTags() {
   return response.json();
 }
 
-export async function addTask(taskName, _tags = [], additionalData = '') {
+export async function addTask(taskName, _tags = "", additionalData = '') {
   const response = await fetch(`${API_URL}/tasks`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -19,7 +19,7 @@ export async function addTask(taskName, _tags = [], additionalData = '') {
   return response.json();
 }
 
-export async function PatchTask(taskId, newTaskName, newTags = [], newAdditionalData = '') {
+export async function PatchTask(taskId, newTaskName, newTags = "", newAdditionalData = '') {
   const response = await fetch(`${API_URL}/tasks/${taskId}`, {
     method: "PATCH",
     headers: { "Content-Type": "application/json" },
@@ -57,18 +57,30 @@ export async function addTag(tagName) {
   return response.json();
 }
 
-export async function fetchTasksWtag(tag = "foo") {
-  const fooTagId = await fetch(`${API_URL}/tags?name=foo`)
-    .then((res) => res.json())
-    .then((tags) => tags[0]?.id);
-
-  if (!fooTagId) return [];
-
-  const response = await fetch(`${API_URL}/tasks?tag=${fooTagId}`);
-  return response.json();
-}
 
 export async function fetchTimeStamps() {
   const response = await fetch(`${API_URL}/timestamps`);
+  return response.json();
+}
+
+
+export async function deleteTask(taskId) {
+  const response = await fetch(`${API_URL}/tasks/${taskId}`, {
+    method: "DELETE",
+  });
+  return response.json();
+}
+
+export async function setOptions(theme, AlternativeMode, textual_data) {
+  const response = await fetch(`${API_URL}/options/1`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ theme: theme, alternative: AlternativeMode, own_textual_data: textual_data }),
+  });
+  return response.json();
+}
+
+export async function fetchOptions() {
+  const response = await fetch(`${API_URL}/options/1`);
   return response.json();
 }

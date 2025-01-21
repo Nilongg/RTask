@@ -1,68 +1,146 @@
 import React, { useEffect, useState } from 'react';
-import { fetchTasks, addTask, fetchTimeStamps, addTimeStamp, addTag, fetchTags } from "./api";
+import { fetchTasks, addTask, fetchTimeStamps, addTimeStamp, addTag, fetchTags, PatchTask, PutTask } from "./TaskComponents/api";
 import './home.css';
+import Timeline from './TaskComponents/timeline';
+import Select from 'react-select';
+import openOptionBox from './TaskComponents/taskOptions';
 
-const HomePage = () => {
+const HomePage = (props) => {
+  const { alternativeMode } = props;
   const [tasks, setTasks] = useState([]);
   const [timeStamps, setTimeStamps] = useState([]);
   const [tags, setTags] = useState([]);
-  const [activeTask, setActiveTask] = useState(null);
-  const [activeTaskTime, setActiveTaskTime] = useState(0);
-  const [backLogTasks, setBackLogTasks] = useState([]);
-  const [unactiveTasks, setUnactiveTasks] = useState([]);
-  const [readyTasks, setReadyTasks] = useState([]);
   const [optionBox, setOptionBox] = useState(false);
   const [openTask, setOpenTask] = useState(null);
   const [TaskForm, setTaskForm] = useState({});
   const [taskStatus, setTaskStatus] = useState(null);
+  const [timeRangeTaskPairs, setTimeRangeTaskPairs] = useState([]);
+  const [uiTasks, setUiTasks] = useState([]);
+  const [selectedTags, setSelectedTags] = useState([]);
+
+  const [taskColors, setTaskColors] = useState(new Map());
+
 
   const handleTaskFormChange = (e) => {
     setTaskForm((prev) => ({ ...prev, [e.target.name]: e.target.value }));
   };
 
-  const createForm = () => {
-    return (
-      <form>
-        <input
-          type="text"
-          name="name"
-          placeholder="Task name"
-          value={TaskForm.name || ""}
-          onChange={handleTaskFormChange}
-        />
-        <input
-          type="text"
-          name="additionalData"
-          placeholder="Additional data"
-          value={TaskForm.additionalData || ""}
-          onChange={handleTaskFormChange}
-        />
-        <button type="submit" onClick={handleAddTask}>Add Task</button>
-      </form>
-    );
+  const createForm = (whichForm) => {
+    if(whichForm === 'tag') {
+      return (
+        <form>
+          <input
+            type="text"
+            name="tagName"
+            placeholder="Tag name"
+            value={TaskForm.tagName || ""}
+            onChange={handleTaskFormChange}
+          />
+          <button type="submit" onClick={handleAddTag}>Add Tag</button>
+        </form>
+      );
+    } else {
+      return (
+        <form>
+          <input
+            type="text"
+            name="name"
+            placeholder="Task name"
+            value={TaskForm.name || ""}
+            onChange={handleTaskFormChange}
+          />
+          <input 
+            type="text" 
+            name="tags"
+            placeholder="Tags, Example 1,2,3"  
+            value={TaskForm.tags || ""}
+            onChange={handleTaskFormChange}
+          />
+          <input
+            type="text"
+            name="additionalData"
+            placeholder="Additional data"
+            value={TaskForm.additionalData || ""}
+            onChange={handleTaskFormChange}
+          />
+          <button type="submit" onClick={handleAddTask}>Add Task</button>
+        </form>
+      );
+    }
   };
 
-  const refreshTasksAndTags = async () => {
+  const [taskPriorities, setTaskPriorities] = useState(() => {
+    const storedPriorities = localStorage.getItem("taskPriorities");
+    return storedPriorities ? JSON.parse(storedPriorities) : {}; // Return empty object if no data found
+  });
+
+  // Function to fetch all tasks, tags and timestamps and update the state
+  // This function is used to refresh the data and save it to the state
+  const refreshAndSave = async () => {
     const allTasks = await fetchTasks();
     const allTags = await fetchTags();
-    setTasks(allTasks);
+    const allTimeStamps = await fetchTimeStamps();
+    setTimeStamps(allTimeStamps);
     setTags(allTags);
+    setUiTasks([...allTasks].map((task) => ({
+      ...task,
+      priority: taskPriorities[task.id] || "NO-PRIORITY", // Assign the priority or "No Priority" if not found
+    })));
+
+    // Make a map for background colors for tasks based on their active status from timestamp table
+    setTaskColors(new Map(allTasks.map((task) => {
+      const taskTimeStamps = allTimeStamps.filter((ts) => ts.task === task.id);
+      if(taskTimeStamps.length === 0) {
+        return [task.id, 'lightcoral'];
+      }
+      const taskStatus = taskTimeStamps[taskTimeStamps.length - 1].type;
+      return [task.id, taskStatus === 1 ? 'lightgreen' : 'lightcoral'];
+    })));
+
+    setTasks(allTasks);
   };
 
+  // Function to handle the addition of a tag
+  // The function will check if the name is valid
+  const handleAddTag = async (e) => {
+    e.preventDefault();
+    const { tagName } = TaskForm;
+    if (!tagName) {
+      return alert('Invalid name');
+    }
+    refreshAndSave();
+  };
+
+  // Function to handle the addition of a task
+  // The function will check if the name is valid and if the tags are valid
   const handleAddTask = async (e) => {
     e.preventDefault();
-    console.log('Adding task');
-    const { name, additionalData } = TaskForm;
+    const { name, tags, additionalData } = TaskForm;
     if (!name) {
       return alert('Invalid name');
     }
-    console.log(await addTask(name, null, additionalData));
-    refreshTasksAndTags();
+    if(tags) {
+      // Check if tags are valid by checking if they only contain numbers and can be split by commas
+      const regex = /^\d+(,\d+)*$/;
+      if(!regex.test(tags)) {
+        alert('Invalid tags');
+        return;
+      }
+      const tagIds = tags.split(',');
+      for (const tag of tagIds) {
+        if(tags.includes(tag) === false) {
+          alert('Invalid tag: ' + tag);
+          return;
+        }
+      }
+    }
+    await addTask(name, tags, additionalData);
+    refreshAndSave();
   };
 
+  // Function to handle the click of a task
+  // If the task is clicked, the option box will open
   const handleTaskClick = (task) => {
-    console.log(task)
-    console.log('Task clicked:', task.name);
     if(openTask === null) {
       setOpenTask(task);
       setOptionBox(true);
@@ -75,177 +153,186 @@ const HomePage = () => {
     }
   };
 
-  const closeOptionBox = () => {
-    console.log('Closing option box');
-    setOpenTask(null);
-    setOptionBox(false);
-  
-  };
-
-  const openOptionBox = () => {
-    let funcToCall = unactivateTask;
-    let activeText = 'Unactivate';
-    if(taskStatus === 0) {
-      activeText = 'Activate';
-      funcToCall = activateTask;
-    }
-    
-    return (
-      <div id="optionContainer">
-        <h1 contentEditable onBlur={(e) => onTaskInfoChange(e.target.textContent, "name")}>{openTask.name}</h1>
-        <p contentEditable onBlur={(e) => onTaskInfoChange(e.target.textContent, "additional")}>{openTask.additional_data}</p>
-        <div>Tags
-          <ul>
-            [{openTask.tags}]
-          </ul>
-        </div>
-        <p>Status: {taskStatus}</p>
-        <button onClick={funcToCall}>{activeText}</button>
-        <button onClick={markAsReady}>Mark as ready</button>
-        <button>Edit</button>
-        <button onClick={closeOptionBox}>Close and save</button>
-      </div>
-    );
-  };
-
   const onTaskInfoChange = (newInfo, whatToChange) => {
-    console.log('Changing task info:', newInfo);
+    
     if(whatToChange === "name") {
       setOpenTask((prev) => ({...prev, name: newInfo}));
     }
     else if(whatToChange === "additional") {
       setOpenTask((prev) => ({...prev, additional_data: newInfo}));
     }
-  }
-  
+    else if(whatToChange === "tags") {
+      //Check if the new tags are valid
+      const newInfoArray = newInfo.split(',');
+      // Check for duplicates
+      if(newInfoArray.length !== new Set(newInfoArray).size) {
+        alert('Duplicate tags found');
+        // Set the tags back to the original
+        const oldTags = tasks.find((task) => task.id === openTask.id).tags.split(',');
 
-  const unactivateTask = async () => {
-    if(openTask === null ) {
-      console.log('No task is selected, you should not be able to call this function');
-      return;
+        setOpenTask((prev) => ({ ...prev, tags: oldTags.join(',') }));
+        return;
+      }
+      // parse the new tags to integers/numbers
+      newInfoArray.forEach((tag, index) => {
+        newInfoArray[index] = parseInt(tag);
+      });
+
+      const tagIds = tags.map((tag) => tag.id);
+
+      for (const tag of newInfoArray) {
+        if(tagIds.includes(tag) === false) {
+          alert('Invalid tag: ' + tag);
+          // Set the tags back to the original
+          const oldTags = tasks.find((task) => task.id === openTask.id).tags.split(',');
+
+          setOpenTask((prev) => ({ ...prev, tags: oldTags.join(',') }));
+        }
+      }
+      // If all tags are valid, continue with updating openTask
+      setOpenTask((prev) => ({ ...prev, tags: newInfo }));
     }
-    console.log('Unactivating task:', openTask.name);
-    const currentTime = new Date().toISOString().replace('T', ' ').replace('Z', '');
-    await addTimeStamp(currentTime, openTask.id, 0);
-    setTaskStatus(0);
-  }
-
-  const activateTask = async () => {
-    if(openTask.id === null ) {
-      console.log('No task is selected, you should not be able to call this function');
-      return;
-    }
-    console.log('Activating task:', openTask.id);
-    const currentTime = new Date().toISOString().replace('T', ' ').replace('Z', '');
-    await addTimeStamp(currentTime, openTask.id, 1);
-    setTaskStatus(1);
-    
-  }
-
-  const markAsReady = async () => {
-    if(openTask === null ) {
-      console.log('No task is selected, you should not be able to call this function');
-      return;
-    }
-    console.log('Marking task as ready:', openTask.id);
-    if(taskStatus === 1) {
-      const currentTime = new Date().toISOString().replace('T', ' ').replace('Z', '');
-      await addTimeStamp(currentTime, openTask.id, 0);
-      setTaskStatus(0);
-    } 
-    const taskToAdd = tasks.find((task) => task.id === openTask.id);
-    console.log('Task to add to ready:', taskToAdd);
-    setReadyTasks((prev) => [...prev, taskToAdd]);
-
   }
 
   const checkTaskStatus = async (taskId) => {
     const taskTimeStamps = await fetchTimeStamps();
     const task = taskTimeStamps.filter((ts) => ts.task === taskId);
-    console.log("Task:", task);
     setTaskStatus(task.length ? task[task.length - 1].type : null);
   };
 
-  const getNonActivatedTasks = async () => {
-    const timeStamps = await fetchTimeStamps();
-    const activatedTasks = new Set();
-    timeStamps.forEach((ts) => {
-      if (ts.type === 0) {
-        activatedTasks.add(ts.task);
-      }
-    });
-    console.log("Activated tasks:", activatedTasks);
-  };
-
-  useEffect(() => {
-    console.log('HomePage is active');
-    document.body.style.backgroundColor = 'lightblue';
-    document.body.style.color = 'black';
-
-    return () => {
-      console.log('HomePage is unmounted');
-      document.body.style.backgroundColor = ''; // Cleanup
-      document.body.style.color = ''; // Cleanup
-    };
+  useEffect( () => {
+    refreshAndSave();
   }, []);
 
-  return (
+
+  const [draggingTask, setDraggingTask] = useState(null);
+
+  const handleDragStart = (task) => {
+    setDraggingTask(task);
+  };
+
+  const handleDrop = (e, newPriority) => {
+    e.preventDefault();
+
+    if (!draggingTask) return;
+
+    // Update the task's priority
+    const updatedTasks = uiTasks.map((task) =>
+      task.id === draggingTask.id ? { ...task, priority: newPriority } : task
+    );
+
+    setUiTasks(updatedTasks);
+    // Save the updated priority to the taskPriorities object and replace the old
+    const updatedPriorities = { ...taskPriorities, [draggingTask.id]: newPriority };
+    setTaskPriorities(updatedPriorities);
+
+    // Save updated priorities to localStorage
+    localStorage.setItem("taskPriorities", JSON.stringify(updatedPriorities));
+    
+    setDraggingTask(null);
+  };
+
+  const handleDragOver = (e) => {
+    e.preventDefault(); // Allow dropping
+  };
+
+  return (    
     <div id="HomeContainer">
+      <div id='tagFilter'>
+        <Select 
+          isMulti 
+          options={tags.map((tag) => ({value: tag.id, label: tag.name}))} 
+          placeholder="Filter by tags"
+          onChange={(selected) => {setSelectedTags(selected)}}
+          />
+      </div>
       <div id="mainContainer">
-        <div>BACKLOG
-          <ul className="taskState">
-            {tasks.map((task) => (
-              <li
-                onClick={() => optionBox ? '' : handleTaskClick(task)}
-                key={task.id}
-              >
-                {task.name}. Tags: {task.tags}. info: {task.additional_data}
-              </li>
-            ))}
-          </ul>
-        </div>
-        <div>UNACTIVE</div>
-        <div>ACTIVE</div>
-        <div>READY
-          <ul className="taskState">
-            {readyTasks.map((task) => (
-              <li
-                onClick={() => optionBox ? '' : handleTaskClick(task)}
-                key={task.id}
-              >
-                {task.name}. Tags: {task.tags}. info: {task.additional_data}
-              </li>
-            ))}
-          </ul>
-        </div>
+        {["NO-PRIORITY", "LOW-PRIORITY", "MEDIUM-PRIORITY", "HIGH-PRIORITY"].map((priority) => (
+          <div
+            key={priority}
+            onDrop={(e) => handleDrop(e, priority)}
+            onDragOver={handleDragOver}
+            style={{
+              padding: "10px",
+              margin: "10px",
+              minHeight: "100px",
+            }}
+          >
+            <h3>{priority}</h3>
+            <ul className="taskState">
+              {/* If the filter option is on then filter the tasks by the selected filters */}
+              {selectedTags.length > 0 ? uiTasks.filter((task) => {
+                let found = false;
+                selectedTags.forEach((tag) => {
+                  if(task.tags.includes(tag.value)) {
+                    found = true;
+                  }
+                });
+                return found; 
+              })
+              .filter((task) => task.priority === priority)
+              .map((task) => {
+                return (
+                  <li
+                    key={task.id}
+                    draggable
+                    onDragStart={() => handleDragStart(task)}
+                    onClick={(e) => {
+                      // Prevent onClick from firing if the task is being dragged
+                      if (e.target === e.currentTarget) {
+                        handleTaskClick(task);
+                      }
+                    }}
+                    style={{
+                      padding: "5px",
+                      margin: "5px",
+                      cursor: "grab",
+                      backgroundColor: taskColors.get(task.id),
+                    }}>
+                    {task.name + " "}
+                    Tags: {tags.map((tag) => task.tags.includes(tag.id) ? tag.name + ", " : '').join('')}
+                    Info: {task.additional_data}
+                  </li>
+                );
+              })
+              : uiTasks
+                .filter((task) => task.priority === priority)
+                .map((task) => (
+                  <li
+                    key={task.id}
+                    draggable
+                    onDragStart={() => handleDragStart(task)}
+                    onClick={(e) => {
+                      // Prevent onClick from firing if the task is being dragged
+                      if (e.target === e.currentTarget) {
+                        handleTaskClick(task);
+                      }
+                    }}
+                    style={{
+                      padding: "5px",
+                      margin: "5px",
+                      backgroundColor: taskColors.get(task.id),
+                      cursor: "grab",
+                    }}>
+                    {task.name + " "}
+                    Tags: {tags.map((tag) => task.tags.includes(tag.id) ? tag.name + ", " : '').join('')}
+                    Info: {task.additional_data}
+                  </li>
+                ))}
+            </ul>
+          </div>
+        ))}
       </div>
       <div id="TempContainer">
-        <div id="taskButton">
-          <button onClick={refreshTasksAndTags}>Get tasks</button>
+        <div>{createForm('task')}</div>
+        <div>{createForm('tag')}</div>
+        <div>
+          {Timeline(tasks, tags, timeStamps, setTimeStamps, refreshAndSave, timeRangeTaskPairs, setTimeRangeTaskPairs)}
         </div>
-        <div>{createForm()}</div>
       </div>
-      {optionBox ? openOptionBox() : ''}
+      {optionBox ? openOptionBox(openTask, setOpenTask, tags, onTaskInfoChange, taskStatus, setTaskStatus, refreshAndSave, setOptionBox, alternativeMode) : ''}
     </div>
   );
 };
 
 export default HomePage;
-
-
-//TODO LIST for the home page
-
-// DONE 1. Make the active/unactivate button work (change the status of the task)
-// DONE 2. Make the Mark as ready button work (change the status of the task to ready and move it to the ready list)
-// 3. Make the Edit button work (Make the form's fields editable and add a save button) // Forget save button save changes when user closes the option box
-// 5. Make adding tags to the task possible
-// 6. Make it possible to make new tags
-// 7. Make it possible to delete tags
-// 8. Make it possible to filter tasks by tags
-// 9. Add a timeline that shows active tasks and the time they have been active (The timeline can be customized by the user)
-// 10. Add a timer that shows the time spent on the active task
-// 11. Add a timer that shows the time spent on the ready tasks
-
-// Settings tab TODO LIST
-// 
-

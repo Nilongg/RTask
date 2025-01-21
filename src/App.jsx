@@ -1,7 +1,8 @@
 // Base imports
-import React, { useEffect } from 'react';
+import React, { useEffect , useState} from 'react';
 import { BrowserRouter, Routes, Route, Link, Navigate } from 'react-router-dom';
 import './App.css';
+import { fetchOptions } from './TaskComponents/api';
 
 // Page imports
 import HomePage from './Home';
@@ -13,27 +14,81 @@ import SettingsPage from './Settings';
 
 function App() {
 
+  //useState for the alternating mode
+  const [alternativeMode, setAlternativeMode] = useState(false);
 
-  const loadSavedStyles = () => {
-    const savedColor = localStorage.getItem('navFontColor');
-    const savedBgColor = localStorage.getItem('navBgColor');
-    const nav = document.getElementById('Navigation');
-    if (savedColor) {
-      Array.from(nav.children).forEach(child => {
-        if (child.tagName === 'A') {
-          child.style.color = savedColor;
+  const loadSavedStyles =  async () => {
+    let options = [{}]
+    // Fetch the options from the database
+    options = await fetchOptions();
+    
+    // Set the theme and alternative mode based on the fetched options
+    const theme = options[0].theme;
+    const alternative = options[0].alternative;
+
+    // Set the styles based on the theme
+    switch (theme) {
+      case 'blue-gray': {
+        document.body.style.backgroundColor = 'lightblue';
+        document.body.style.color = 'black';
+        const nav = document.getElementById('Navigation');
+        nav.style.backgroundColor = 'gray';
+        Array.from(nav.children).forEach(child => {
+          if (child.tagName === 'A') {
+            child.style.color = 'white';
+          }
+        });
+        break;
+      }
+      case 'wood-stone': {
+        document.body.style.backgroundColor = '#ad4c26';
+        document.body.style.color = 'black';
+        const nav = document.getElementById('Navigation');
+        Array.from(nav.children).forEach(child => {
+          if (child.tagName === 'A') {
+            child.style.color = '#ad4c26';
+            child.style.fontWeight = 'bold';
+          }
+        });
+        break;
+      }
+      case 'black-pink': {
+        document.body.style.backgroundColor = '#a8324a';
+        document.body.style.color = 'black';
+        const nav = document.getElementById('Navigation');
+        Array.from(nav.children).forEach(child => {
+          if (child.tagName === 'A') {
+            child.style.color = 'white';
+          }
+        });
+        break;
+      }
+      default:
+        // Use the first theme as default
+        console.log('Default theme');
+        { document.body.style.backgroundColor = 'lightblue';
+        document.body.style.color = 'black';
+        const nav = document.getElementById('Navigation');
+        nav.style.backgroundColor = 'gray';
+        Array.from(nav.children).forEach(child => {
+          if (child.tagName === 'A') {
+            child.style.color = 'white';
+          }
         }
-      });
+        );
+        break; }
     }
-    if (savedBgColor) {
-      nav.style.backgroundColor = savedBgColor;
+    // Set the alternative mode based on the fetched options
+    if (alternative === '1') {
+      setAlternativeMode(true);
+    } else {
+      setAlternativeMode(false);
     }
-
-
   };
+
   useEffect(() => {
     loadSavedStyles();
-  })
+  }, []);
 
   return (
     <BrowserRouter>
@@ -43,9 +98,9 @@ function App() {
         <Link to="/settings">Settings</Link>
       </nav>
       <Routes>
-        <Route path="/" element={<HomePage />} />
+        <Route path="/" element={<HomePage alternativeMode={alternativeMode}/>} />
         <Route path="/about" element={<AboutPage />} />
-        <Route path="/settings" element={<SettingsPage />} />
+        <Route path="/settings" element={<SettingsPage alternativeMode={alternativeMode} setAlternativeMode={setAlternativeMode} loadOptions={loadSavedStyles} />} />
         <Route path="*" element={<Navigate to="/" />} />
       </Routes>
     </BrowserRouter>
